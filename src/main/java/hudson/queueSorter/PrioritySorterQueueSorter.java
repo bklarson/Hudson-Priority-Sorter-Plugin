@@ -25,8 +25,13 @@ package hudson.queueSorter;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
+import hudson.model.Cause;
+import hudson.model.Cause.UserCause;
+import hudson.model.CauseAction;
 import hudson.model.Queue.BuildableItem;
 import hudson.model.queue.QueueSorter;
+import hudson.triggers.SCMTrigger.SCMTriggerCause;
+import hudson.triggers.TimerTrigger.TimerTriggerCause;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,11 +57,18 @@ public class PrioritySorterQueueSorter extends QueueSorter {
 				// which do work will get built first.
 				return 0;
 			}
+
 			AbstractProject<?, ?> project = (AbstractProject<?, ?>) buildable.task;
 			PrioritySorterJobProperty priority = project
 					.getProperty(PrioritySorterJobProperty.class);
 			if (priority != null) {
-				return priority.priority;
+				List<CauseAction> causeActions = buildable
+						.getActions(CauseAction.class);
+				return priority.priority
+						+ adjustPriorityForCause(causeActions,
+								priority.getDescriptor().userBuildPriority,
+								priority.getDescriptor().scmPriority,
+								priority.getDescriptor().timerPriority);
 			} else {
 				// No priority has been set for this job - use the default (from
 				// config.jelly)
@@ -70,5 +82,29 @@ public class PrioritySorterQueueSorter extends QueueSorter {
 	@Override
 	public void sortBuildableItems(List<BuildableItem> buildables) {
 		Collections.sort(buildables, comparitor);
+	}
+
+	private static int adjustPriorityForCause(List<CauseAction> causeActions,
+			int userBuildPriority, int scmPriority, int timerPriority) {
+		if (causeActions == null)
+			return 0;
+
+		int adjustedPriority = 0;
+		for (CauseAction ca : causeActions) {
+			List<Cause> causes = ca.getCauses();
+			if (causes == null)
+				break;
+			for (Cause cause : causes) {
+				if (cause instanceof SCMTriggerCause) {
+					adjustedPriority += scmPriority;
+				} else if (cause instanceof TimerTriggerCause) {
+					adjustedPriority += timerPriority;
+				} else if (cause instanceof UserCause) {
+					adjustedPriority += userBuildPriority;
+				}
+			}
+
+		}
+		return adjustedPriority;
 	}
 }

@@ -1,0 +1,23 @@
+<j:jelly
+	xmlns:j="jelly:core"
+	xmlns:st="jelly:stapler"
+	xmlns:d="jelly:define"
+	xmlns:l="/lib/layout"
+	xmlns:t="/lib/hudson"
+	xmlns:f="/lib/form">
+
+	<f:section title="Priority Sorter">
+		<f:entry title="User Build Priority Adjustment" field="userBuildPriority">
+			<f:textbox value="${descriptor.userBuildPriority}" default="0"
+				clazz="required number"/>
+		</f:entry>
+		<f:entry title="SCM Build Priority Adjustment" field="scmPriority">
+			<f:textbox value="${descriptor.scmPriority}" default="0"
+				clazz="required number"/>
+		</f:entry>
+		<f:entry title="Timer Priority Adjustment" field="timerPriority">
+			<f:textbox value="${descriptor.timerPriority}" default="0"
+				clazz="required number"/>
+		</f:entry>
+	</f:section>
+</j:jelly>

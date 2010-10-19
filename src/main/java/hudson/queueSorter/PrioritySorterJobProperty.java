@@ -28,7 +28,10 @@ import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.AbstractProject;
 
+import net.sf.json.JSONObject;
+
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 public class PrioritySorterJobProperty extends
 		JobProperty<AbstractProject<?, ?>> {
@@ -51,9 +54,54 @@ public class PrioritySorterJobProperty extends
 
 	@Extension
 	public static final class DescriptorImpl extends JobPropertyDescriptor {
+		int userBuildPriority;
+		int scmPriority;
+		int timerPriority;
+
+		public DescriptorImpl() {
+			super(PrioritySorterJobProperty.class);
+			load();
+		}
+
 		@Override
 		public String getDisplayName() {
 			return "Job Priority";
+		}
+
+		@Override
+		public boolean configure(StaplerRequest req, JSONObject json)
+				throws hudson.model.Descriptor.FormException {
+			try {
+				userBuildPriority = Integer.valueOf(json
+						.getString("userBuildPriority"));
+			} catch (NumberFormatException e) {
+				userBuildPriority = 0;
+			}
+			try {
+				scmPriority = Integer.valueOf(json.getString("scmPriority"));
+			} catch (NumberFormatException e) {
+				scmPriority = 0;
+			}
+			try {
+				timerPriority = Integer
+						.valueOf(json.getString("timerPriority"));
+			} catch (NumberFormatException e) {
+				timerPriority = 0;
+			}
+			save();
+			return super.configure(req, json);
+		}
+
+		public int getUserBuildPriority() {
+			return userBuildPriority;
+		}
+
+		public int getScmPriority() {
+			return scmPriority;
+		}
+
+		public int getTimerPriority() {
+			return timerPriority;
 		}
 	}
 }
